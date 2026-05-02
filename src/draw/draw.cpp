@@ -1,4 +1,3 @@
-#include "declarations.h"
 #include "draw.h"
 #include "bitmaps.h"
 
@@ -148,7 +147,7 @@ void drawMenu(bool fullRedraw, int items[])
     // dibujar barra
     display.fillRect(123, 0, 3, 64, BLACK);
     display.drawLine(124, 2, 124, 61, 1);
-    display.drawRect(123, 64 / NUM_ITEMS * items[ITEM_PREVIUS] + 1, 3, 64 / NUM_ITEMS, 1);
+    display.drawRect(123, 64 / NUM_MENU_ITEMS * items[ITEM_PREVIOUS] + 1, 3, 64 / NUM_MENU_ITEMS, 1);
     // dibujar item previo
     display.fillRect(4, 4, 114, 15, BLACK);
     display.drawBitmap(6, 5, icons_bitmaps[items[0]], 17, 12, 1);

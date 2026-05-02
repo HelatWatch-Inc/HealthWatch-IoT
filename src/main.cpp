@@ -1,11 +1,13 @@
-#include "declarations.h"
+#include "config.h"
+#include "constants.h"
+#include "states.h"
 #include "init/init.h"
 #include "draw/draw.h"
 #include "items/items.h"
 
 // Manejo de pantallas
 byte currentScreen = SCREEN_CLOCK;
-byte previusScreen = -1;
+byte previousScreen = -1;
 // Items
 int items[] = {ITEM_LINTERN, ITEM_CHRONOMETER, ITEM_EXIT};
 
@@ -27,195 +29,195 @@ unsigned short progress = 0;
 
 void setup()
 {
-  Serial.begin(9600);
-  initWifi();
-  Serial.println("-----------------------------");
-  initNtpClient();
-  Serial.println("-----------------------------");
-  initButtons();
-  Serial.println("-----------------------------");
-  Serial.println("-----------------------------");
-  initScreen();
-  Serial.println("-----------------------------");
+    Serial.begin(9600);
+    initWifi();
+    Serial.println("-----------------------------");
+    initNtpClient();
+    Serial.println("-----------------------------");
+    initButtons();
+    Serial.println("-----------------------------");
+    Serial.println("-----------------------------");
+    initScreen();
+    Serial.println("-----------------------------");
 }
 
 void handleButtonPress(int button, bool &pressFlag, void (*action)())
 {
-  if (digitalRead(button) == LOW)
-  {
-    pressFlag = true;
-  }
-  if (digitalRead(button) == HIGH && pressFlag)
-  {
-    pressFlag = false;
-    action();
-  }
+    if (digitalRead(button) == LOW)
+    {
+        pressFlag = true;
+    }
+    if (digitalRead(button) == HIGH && pressFlag)
+    {
+        pressFlag = false;
+        action();
+    }
 }
 
 void selectAction()
 {
-  Serial.println("Boton Select apretado");
-  if (currentScreen == SCREEN_CLOCK)
-  {
-    currentScreen = SCREEN_MENU;
-  }
-  else if (currentScreen == SCREEN_MENU)
-  {
-    switch (items[ITEM_SELECTED])
+    Serial.println("Boton Select apretado");
+    if (currentScreen == SCREEN_CLOCK)
     {
-    case ITEM_EXIT:
-      currentScreen = SCREEN_CLOCK;
-      break;
-    case ITEM_LINTERN:
-      linter_on = !linter_on;
-      Serial.println("Linterna " + String(linter_on ? "encendida" : "apagada"));
-      break;
-    default:
-      currentScreen = SCREEN_ITEM;
-      break;
+        currentScreen = SCREEN_MENU;
     }
-  }
-  else if (currentScreen == SCREEN_ITEM)
-  {
-    switch (items[ITEM_SELECTED])
+    else if (currentScreen == SCREEN_MENU)
     {
-    case ITEM_CHRONOMETER:
-      // exit
-      exitChronometer(runningChronometer, startTime, elapsedTime);
-      currentScreen = SCREEN_MENU;
-      break;
-    default:
-      currentScreen = SCREEN_MENU;
-      break;
+        switch (items[ITEM_SELECTED])
+        {
+        case ITEM_EXIT:
+            currentScreen = SCREEN_CLOCK;
+            break;
+        case ITEM_LINTERN:
+            linter_on = !linter_on;
+            Serial.println("Linterna " + String(linter_on ? "encendida" : "apagada"));
+            break;
+        default:
+            currentScreen = SCREEN_ITEM;
+            break;
+        }
     }
-  }
+    else if (currentScreen == SCREEN_ITEM)
+    {
+        switch (items[ITEM_SELECTED])
+        {
+        case ITEM_CHRONOMETER:
+            // exit
+            exitChronometer(runningChronometer, startTime, elapsedTime);
+            currentScreen = SCREEN_MENU;
+            break;
+        default:
+            currentScreen = SCREEN_MENU;
+            break;
+        }
+    }
 }
 
 void upAction()
 {
-  Serial.println("Boton Up apretado");
-  if (currentScreen == SCREEN_MENU)
-  {
-    items[ITEM_SELECTED]--;
-    if (items[ITEM_SELECTED] < 0)
+    Serial.println("Boton Up apretado");
+    if (currentScreen == SCREEN_MENU)
     {
-      items[ITEM_SELECTED] = NUM_ITEMS - 1;
+        items[ITEM_SELECTED]--;
+        if (items[ITEM_SELECTED] < 0)
+        {
+            items[ITEM_SELECTED] = NUM_MENU_ITEMS - 1;
+        }
     }
-  }
-  else if (currentScreen == SCREEN_ITEM)
-  {
-    switch (items[ITEM_SELECTED])
+    else if (currentScreen == SCREEN_ITEM)
     {
-    case ITEM_CHRONOMETER:
-      startPauseChronometer(runningChronometer, startTime, elapsedTime);
-      break;
-    default:
-      break;
+        switch (items[ITEM_SELECTED])
+        {
+        case ITEM_CHRONOMETER:
+            startPauseChronometer(runningChronometer, startTime, elapsedTime);
+            break;
+        default:
+            break;
+        }
     }
-  }
 }
 
 void downAction()
 {
-  Serial.println("Boton Down apretado");
-  if (currentScreen == SCREEN_MENU)
-  {
-    items[ITEM_SELECTED]++;
-    if (items[ITEM_SELECTED] >= NUM_ITEMS)
+    Serial.println("Boton Down apretado");
+    if (currentScreen == SCREEN_MENU)
     {
-      items[ITEM_SELECTED] = 0;
+        items[ITEM_SELECTED]++;
+        if (items[ITEM_SELECTED] >= NUM_MENU_ITEMS)
+        {
+            items[ITEM_SELECTED] = 0;
+        }
     }
-  }
-  else if (currentScreen == SCREEN_ITEM)
-  {
-    switch (items[ITEM_SELECTED])
+    else if (currentScreen == SCREEN_ITEM)
     {
-    case ITEM_CHRONOMETER:
-      // reset
-      resetChronometer(runningChronometer, startTime, elapsedTime);
-      break;
-    default:
-      break;
+        switch (items[ITEM_SELECTED])
+        {
+        case ITEM_CHRONOMETER:
+            // reset
+            resetChronometer(runningChronometer, startTime, elapsedTime);
+            break;
+        default:
+            break;
+        }
     }
-  }
 }
 
 void updateScreen()
 {
-  if (currentScreen != previusScreen)
-  {
-    switch (currentScreen)
+    if (currentScreen != previousScreen)
     {
-    case SCREEN_CLOCK:
-      drawClock(true);
-      break;
-    case SCREEN_MENU:
-      if (previusScreen != SCREEN_ITEM)
-      {
-        // Reinicio de visualizion de items
-        items[ITEM_PREVIUS] = ITEM_LINTERN;
-        items[ITEM_SELECTED] = ITEM_CHRONOMETER;
-        items[ITEM_NEXT] = ITEM_EXIT;
-      }
-      drawMenu(true, items);
-      break;
-    case SCREEN_ITEM:
-      switch (items[ITEM_SELECTED])
-      {
-      case ITEM_CHRONOMETER:
-        drawChronometer(true, elapsedTime);
-        break;
-      default:
-        break;
-      }
-      break;
+        switch (currentScreen)
+        {
+        case SCREEN_CLOCK:
+            drawClock(true);
+            break;
+        case SCREEN_MENU:
+            if (previousScreen != SCREEN_ITEM)
+            {
+                // Reinicio de visualizion de items
+                items[ITEM_PREVIOUS] = ITEM_LINTERN;
+                items[ITEM_SELECTED] = ITEM_CHRONOMETER;
+                items[ITEM_NEXT] = ITEM_EXIT;
+            }
+            drawMenu(true, items);
+            break;
+        case SCREEN_ITEM:
+            switch (items[ITEM_SELECTED])
+            {
+            case ITEM_CHRONOMETER:
+                drawChronometer(true, elapsedTime);
+                break;
+            default:
+                break;
+            }
+            break;
+        }
+        previousScreen = currentScreen;
     }
-    previusScreen = currentScreen;
-  }
-  else
-  {
-    switch (currentScreen)
+    else
     {
-    case SCREEN_CLOCK:
-      drawClock(false);
-      break;
-    case SCREEN_MENU:
-      items[ITEM_PREVIUS] = items[ITEM_SELECTED] - 1;
-      if (items[ITEM_PREVIUS] < 0)
-      {
-        items[ITEM_PREVIUS] = NUM_ITEMS - 1;
-      }
-      items[ITEM_NEXT] = items[ITEM_SELECTED] + 1;
-      if (items[ITEM_NEXT] >= NUM_ITEMS)
-      {
-        items[ITEM_NEXT] = 0;
-      }
-      drawMenu(false, items);
-      break;
-    case SCREEN_ITEM:
-      switch (items[ITEM_SELECTED])
-      {
-      case ITEM_CHRONOMETER:
-        drawChronometer(false, elapsedTime);
-        break;
-      default:
-        break;
-      }
-      break;
+        switch (currentScreen)
+        {
+        case SCREEN_CLOCK:
+            drawClock(false);
+            break;
+        case SCREEN_MENU:
+            items[ITEM_PREVIOUS] = items[ITEM_SELECTED] - 1;
+            if (items[ITEM_PREVIOUS] < 0)
+            {
+                items[ITEM_PREVIOUS] = NUM_MENU_ITEMS - 1;
+            }
+            items[ITEM_NEXT] = items[ITEM_SELECTED] + 1;
+            if (items[ITEM_NEXT] >= NUM_MENU_ITEMS)
+            {
+                items[ITEM_NEXT] = 0;
+            }
+            drawMenu(false, items);
+            break;
+        case SCREEN_ITEM:
+            switch (items[ITEM_SELECTED])
+            {
+            case ITEM_CHRONOMETER:
+                drawChronometer(false, elapsedTime);
+                break;
+            default:
+                break;
+            }
+            break;
+        }
     }
-  }
 }
 
 void loop()
 {
-  handleButtonPress(BUTTON_SELECT, pressSelect, selectAction);
-  handleButtonPress(BUTTON_UP, pressUp, upAction);
-  handleButtonPress(BUTTON_DOWN, pressDown, downAction);
+    handleButtonPress(BUTTON_SELECT, pressSelect, selectAction);
+    handleButtonPress(BUTTON_UP, pressUp, upAction);
+    handleButtonPress(BUTTON_DOWN, pressDown, downAction);
 
-  if (runningChronometer)
-  {
-    elapsedTime = millis() - startTime;
-  }
+    if (runningChronometer)
+    {
+        elapsedTime = millis() - startTime;
+    }
 
-  updateScreen();
+    updateScreen();
 }
