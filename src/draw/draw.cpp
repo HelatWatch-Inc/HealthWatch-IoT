@@ -150,18 +150,21 @@ void drawMenu(bool fullRedraw, int items[])
     display.drawRect(123, 64 / NUM_MENU_ITEMS * items[ITEM_PREVIOUS] + 1, 3, 64 / NUM_MENU_ITEMS, 1);
     // dibujar item previo
     display.fillRect(4, 4, 114, 15, BLACK);
-    display.drawBitmap(6, 5, icons_bitmaps[items[0]], 17, 12, 1);
+    display.drawBitmap(6, 5, icons_bitmaps[items[0]], 17, 12, WHITE);
     display.setCursor(27, 7);
     display.print(menuItems[items[0]]);
     // dibujar item seleccionado
     display.fillRect(4, 24, 114, 16, BLACK);
-    display.drawBitmap(6, 26, icons_bitmaps[items[1]], 17, 12, 1);
+    display.fillRect(3, 23, 117, 18, WHITE);
+    display.drawBitmap(6, 26, icons_bitmaps[items[1]], 17, 12, BLACK);
     display.setCursor(27, 28);
+    display.setTextColor(BLACK);
     display.print(menuItems[items[1]]);
     // dibujar item posterior
     display.fillRect(4, 46, 114, 15, BLACK);
-    display.drawBitmap(6, 47, icons_bitmaps[items[2]], 17, 12, 1);
+    display.drawBitmap(6, 47, icons_bitmaps[items[2]], 17, 12, WHITE);
     display.setCursor(27, 49);
+    display.setTextColor(WHITE);
     display.print(menuItems[items[2]]);
     display.display();
 }
