@@ -9,7 +9,8 @@
 // Items del menú
 #define ITEM_LINTERN 0
 #define ITEM_CHRONOMETER 1
-#define ITEM_EXIT 2
+#define ITEM_MPU 2
+#define ITEM_EXIT 3
 
 // Posiciones relativas
 #define ITEM_PREVIOUS 0

@@ -18,6 +18,10 @@
 //  Cliente NTP
 #include <NTPClient.h>
 
+// Sensores
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+
 /****************************************************************
                        PINES DE HARDWARE
 ****************************************************************/
@@ -30,6 +34,13 @@
 #define BUTTON_SELECT 12
 #define BUTTON_UP 13
 #define BUTTON_DOWN 14
+
+// BUZZER
+#define BUZZER 4
+
+// MPU
+#define MPU_SDA 21
+#define MPU_SCL 22
 
 /****************************************************************
                         CONFIGURACION DE PANTALLA
@@ -44,5 +55,6 @@
 extern Adafruit_SSD1306 display;
 extern WiFiUDP ntpUDP;
 extern NTPClient ntpClient;
+extern Adafruit_MPU6050 mpu;
 
 #endif

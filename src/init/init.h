@@ -5,5 +5,6 @@ void initWifi();
 void initNtpClient();
 void initButtons();
 void initScreen();
+void initMPU();
 
 #endif

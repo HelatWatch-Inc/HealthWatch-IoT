@@ -7,6 +7,7 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 WiFiUDP ntpUDP;
 NTPClient ntpClient(ntpUDP, "south-america.pool.ntp.org", -5 * 3600, 60000);
+Adafruit_MPU6050 mpu;
 
 // Menu e items
 char menuItems[NUM_MENU_ITEMS][MAX_MENU_ITEM_LENGTH] = {
@@ -47,6 +48,31 @@ void initButtons()
     pinMode(BUTTON_UP, INPUT_PULLUP);
     pinMode(BUTTON_DOWN, INPUT_PULLUP);
     Serial.println("Botones incializados ...");
+}
+
+void initBuzzer()
+{
+    pinMode(BUZZER, OUTPUT);
+}
+
+void initMPU()
+{
+    Wire.begin(MPU_SDA, MPU_SCL);
+    delay(100);
+
+    if (!mpu.begin()) {
+        Serial.println("No se encontró el MPU6050");
+        
+        while (1) {
+        delay(10);
+        }
+    }
+
+    Serial.println("MPU6050 conectado correctamente ...");
+
+    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+    mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+    mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 }
 
 void initScreen()
