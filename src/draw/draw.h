@@ -10,5 +10,6 @@ void drawClock(bool fullRedraw);
 void drawMenu(bool fullRedraw, int items[]);
 // Items
 void drawChronometer(bool fullRedraw, unsigned long elapsedTime);
+void drawFlashlight(bool fullRedraw);
 
 #endif

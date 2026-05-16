@@ -7,10 +7,10 @@
 #define SCREEN_ITEM 2
 
 // Items del menú
-#define ITEM_LINTERN 0
-#define ITEM_CHRONOMETER 1
-#define ITEM_MPU 2
-#define ITEM_EXIT 3
+#define ITEM_CHRONOMETER 0
+#define ITEM_FLASHLIGHT 1
+// #define ITEM_MPU 2
+#define ITEM_EXIT 2
 
 // Posiciones relativas
 #define ITEM_PREVIOUS 0

@@ -201,3 +201,12 @@ void drawChronometer(bool fullRedraw, unsigned long elapsedTime)
     display.printf("%02d:%02d:%02d", minutes, seconds, milliseconds);
     display.display();
 }
+
+void drawFlashlight(bool fullRedraw)
+{
+    if (fullRedraw)
+    {
+        display.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+    }
+    display.display();
+}

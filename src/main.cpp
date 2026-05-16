@@ -5,11 +5,16 @@
 #include "draw/draw.h"
 #include "items/items.h"
 
+// Tareas del nucleo 0
+TaskHandle_t sensorTaskHandle;
+void loop0(void *parameter);
+
 // Manejo de pantallas
 byte currentScreen = SCREEN_CLOCK;
 byte previousScreen = -1;
+
 // Items
-int items[] = {ITEM_LINTERN, ITEM_CHRONOMETER, ITEM_EXIT};
+int items[] = {ITEM_CHRONOMETER, ITEM_FLASHLIGHT, ITEM_EXIT};
 
 // Botones
 bool pressSelect = false;
@@ -20,12 +25,6 @@ bool pressDown = false;
 bool runningChronometer = false;
 unsigned long startTime = 0;
 unsigned long elapsedTime = 0;
-
-// Linterna
-bool linter_on = false;
-
-// Progreso
-unsigned short progress = 0;
 
 void setup()
 {
@@ -40,6 +39,7 @@ void setup()
     Serial.println("-----------------------------");
     initMPU();
     Serial.println("-----------------------------");
+    xTaskCreatePinnedToCore(loop0, "sensorTaskHandle", 5000, NULL, 1, &sensorTaskHandle, 0);
 }
 
 void handleButtonPress(int button, bool &pressFlag, void (*action)())
@@ -68,10 +68,6 @@ void selectAction()
         {
         case ITEM_EXIT:
             currentScreen = SCREEN_CLOCK;
-            break;
-        case ITEM_LINTERN:
-            linter_on = !linter_on;
-            Serial.println("Linterna " + String(linter_on ? "encendida" : "apagada"));
             break;
         default:
             currentScreen = SCREEN_ITEM;
@@ -112,6 +108,9 @@ void upAction()
         case ITEM_CHRONOMETER:
             startPauseChronometer(runningChronometer, startTime, elapsedTime);
             break;
+        case ITEM_FLASHLIGHT:
+            currentScreen = SCREEN_MENU;
+            break;
         default:
             break;
         }
@@ -137,6 +136,9 @@ void downAction()
             // reset
             resetChronometer(runningChronometer, startTime, elapsedTime);
             break;
+        case ITEM_FLASHLIGHT:
+            currentScreen = SCREEN_MENU;
+            break;
         default:
             break;
         }
@@ -156,8 +158,8 @@ void updateScreen()
             if (previousScreen != SCREEN_ITEM)
             {
                 // Reinicio de visualizion de items
-                items[ITEM_PREVIOUS] = ITEM_LINTERN;
-                items[ITEM_SELECTED] = ITEM_CHRONOMETER;
+                items[ITEM_PREVIOUS] = ITEM_CHRONOMETER;
+                items[ITEM_SELECTED] = ITEM_FLASHLIGHT;
                 items[ITEM_NEXT] = ITEM_EXIT;
             }
             drawMenu(true, items);
@@ -167,6 +169,9 @@ void updateScreen()
             {
             case ITEM_CHRONOMETER:
                 drawChronometer(true, elapsedTime);
+                break;
+            case ITEM_FLASHLIGHT:
+                drawFlashlight(true);
                 break;
             default:
                 break;
@@ -201,6 +206,9 @@ void updateScreen()
             case ITEM_CHRONOMETER:
                 drawChronometer(false, elapsedTime);
                 break;
+            case ITEM_FLASHLIGHT:
+                drawFlashlight(false);
+                break;
             default:
                 break;
             }
@@ -211,9 +219,6 @@ void updateScreen()
 
 void loop()
 {
-    sensors_event_t a, g, temp;
-    mpu.getEvent(&a, &g, &temp);
-
     handleButtonPress(BUTTON_SELECT, pressSelect, selectAction);
     handleButtonPress(BUTTON_UP, pressUp, upAction);
     handleButtonPress(BUTTON_DOWN, pressDown, downAction);
@@ -223,30 +228,39 @@ void loop()
         elapsedTime = millis() - startTime;
     }
 
-    /* Print out the values */
-    Serial.print("Acceleration X: ");
-    Serial.print(a.acceleration.x);
-    Serial.print(", Y: ");
-    Serial.print(a.acceleration.y);
-    Serial.print(", Z: ");
-    Serial.print(a.acceleration.z);
-    Serial.println(" m/s^2");
-
-    Serial.print("Rotation X: ");
-    Serial.print(g.gyro.x);
-    Serial.print(", Y: ");
-    Serial.print(g.gyro.y);
-    Serial.print(", Z: ");
-    Serial.print(g.gyro.z);
-    Serial.println(" rad/s");
-
-    Serial.print("Temperature: ");
-    Serial.print(temp.temperature);
-    Serial.println(" degC");
-
-    Serial.println("");
-
     updateScreen();
+}
 
-    delay(500);
+void loop0(void *parameter)
+{
+    while (true)
+    {
+        sensors_event_t a, g, temp;
+        mpu.getEvent(&a, &g, &temp);
+
+        /* Print out the values */
+        Serial.print("Acceleration X: ");
+        Serial.print(a.acceleration.x);
+        Serial.print(", Y: ");
+        Serial.print(a.acceleration.y);
+        Serial.print(", Z: ");
+        Serial.print(a.acceleration.z);
+        Serial.println(" m/s^2");
+
+        Serial.print("Rotation X: ");
+        Serial.print(g.gyro.x);
+        Serial.print(", Y: ");
+        Serial.print(g.gyro.y);
+        Serial.print(", Z: ");
+        Serial.print(g.gyro.z);
+        Serial.println(" rad/s");
+
+        Serial.print("Temperature: ");
+        Serial.print(temp.temperature);
+        Serial.println(" degC");
+
+        Serial.println("");
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 }

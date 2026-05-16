@@ -11,13 +11,13 @@ Adafruit_MPU6050 mpu;
 
 // Menu e items
 char menuItems[NUM_MENU_ITEMS][MAX_MENU_ITEM_LENGTH] = {
-    {"Linterna"},
     {"Cronometro"},
+    {"Linterna"},
     {"Salir"}};
 
 const unsigned char *icons_bitmaps[NUM_MENU_ITEMS] = {
-    image_icon_lintern_bits,
     image_icon_clock_bits,
+    image_icon_flashlight_bits,
     image_icon_out_bits};
 
 // Fecha
@@ -60,11 +60,13 @@ void initMPU()
     Wire.begin(MPU_SDA, MPU_SCL);
     delay(100);
 
-    if (!mpu.begin()) {
+    if (!mpu.begin())
+    {
         Serial.println("No se encontró el MPU6050");
-        
-        while (1) {
-        delay(10);
+
+        while (1)
+        {
+            delay(10);
         }
     }
 
