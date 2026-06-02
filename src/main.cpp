@@ -9,6 +9,50 @@
 TaskHandle_t sensorTaskHandle;
 void loop0(void *parameter);
 
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+
+// setup MQTT
+void reconnectMQTT()
+{
+    while (!mqttClient.connected())
+    {
+        Serial.print("Intentando conexión MQTT...");
+        // Intentar conectar usando el ID del ESP32 como identificador de cliente MQTT
+        if (mqttClient.connect(ID_DEVICE))
+        {
+            Serial.println("¡Conectado al Broker Mosquitto!");
+        }
+        else
+        {
+            Serial.print("Falló con estado: ");
+            Serial.print(mqttClient.state());
+            Serial.println(". Reintentando en 5 segundos...");
+            vTaskDelay(pdMS_TO_TICKS(5000));
+        }
+    }
+}
+
+// =========================
+// SIMULACIONES
+// =========================
+
+float simularHeartRate()
+{
+    return random(70, 90);
+}
+
+int simularSpO2()
+{
+    return random(97, 100);
+}
+
+int simularBateria()
+{
+    int bat = 100 - (millis() / 60000);
+    return (bat < 0) ? 0 : bat;
+}
+
 // Manejo de pantallas
 byte currentScreen = SCREEN_CLOCK;
 byte previousScreen = -1;
@@ -39,6 +83,7 @@ void setup()
     Serial.println("-----------------------------");
     initMPU();
     Serial.println("-----------------------------");
+    mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
     xTaskCreatePinnedToCore(loop0, "sensorTaskHandle", 5000, NULL, 1, &sensorTaskHandle, 0);
 }
 
@@ -235,31 +280,55 @@ void loop0(void *parameter)
 {
     while (true)
     {
+        if (!mqttClient.connected())
+        {
+            reconnectMQTT();
+        }
+
+        mqttClient.loop();
+
         sensors_event_t a, g, temp;
         mpu.getEvent(&a, &g, &temp);
 
-        /* Print out the values */
-        Serial.print("Acceleration X: ");
-        Serial.print(a.acceleration.x);
-        Serial.print(", Y: ");
-        Serial.print(a.acceleration.y);
-        Serial.print(", Z: ");
-        Serial.print(a.acceleration.z);
-        Serial.println(" m/s^2");
+        JsonDocument doc;
 
-        Serial.print("Rotation X: ");
-        Serial.print(g.gyro.x);
-        Serial.print(", Y: ");
-        Serial.print(g.gyro.y);
-        Serial.print(", Z: ");
-        Serial.print(g.gyro.z);
-        Serial.println(" rad/s");
+        // TAGS
+        doc["id_patient"] = ID_PATIENT;
+        doc["id_device"] = ID_DEVICE;
 
-        Serial.print("Temperature: ");
-        Serial.print(temp.temperature);
-        Serial.println(" degC");
+        // MPU6050
+        doc["ax"] = a.acceleration.x;
+        doc["ay"] = a.acceleration.y;
+        doc["az"] = a.acceleration.z;
 
-        Serial.println("");
+        doc["gx"] = g.gyro.x;
+        doc["gy"] = g.gyro.y;
+        doc["gz"] = g.gyro.z;
+
+        doc["temp"] = temp.temperature;
+
+        /// Biométricos simulados
+        doc["heart_rate"] = simularHeartRate();
+        doc["spo2"] = simularSpO2();
+
+        // Telemetría
+        doc["rssi"] = WiFi.RSSI();
+        doc["battery"] = simularBateria();
+
+        // Serializar JSON a un string buffer
+        char jsonBuffer[512];
+        serializeJson(doc, jsonBuffer);
+
+        // Publicar carga útil en el broker MQTT
+        if (mqttClient.publish(MQTT_TOPIC, jsonBuffer))
+        {
+            Serial.print("Datos transmitidos exitosamente a tópico: ");
+            Serial.println(MQTT_TOPIC);
+        }
+        else
+        {
+            Serial.println("Error crítico: No se pudo despachar el mensaje por MQTT.");
+        }
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
