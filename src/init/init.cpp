@@ -57,7 +57,7 @@ void initBuzzer()
 
 void initMPU()
 {
-    Wire.begin(MPU_SDA, MPU_SCL);
+    Wire.begin(I2C_SDA, I2C_SCL);
     delay(100);
 
     if (!mpu.begin())

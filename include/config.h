@@ -32,8 +32,6 @@
                        PINES DE HARDWARE
 ****************************************************************/
 // Pantalla OLED
-#define OLED_SDA 21
-#define OLED_SCL 22
 #define OLED_RESET -1
 
 // BOTONES
@@ -44,9 +42,9 @@
 // BUZZER
 #define BUZZER 4
 
-// MPU
-#define MPU_SDA 21
-#define MPU_SCL 22
+// I2C
+#define I2C_SDA 21
+#define I2C_SCL 22
 
 /****************************************************************
                         CONFIGURACION DE PANTALLA
@@ -56,7 +54,7 @@
 #define SCREEN_ADDRESS 0x3C
 
 /****************************************************************
-                        OBEJTOS GLOBALES
+                        OBJETOS GLOBALES
 ****************************************************************/
 extern Adafruit_SSD1306 display;
 extern WiFiUDP ntpUDP;
