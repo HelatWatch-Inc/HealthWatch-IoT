@@ -6,6 +6,7 @@
 ****************************************************************/
 // Comunicacions 12C
 #include <Wire.h>
+#include <freertos/semphr.h>
 
 // Manejo de graficos
 #include <Adafruit_GFX.h>
@@ -62,5 +63,6 @@ extern WiFiUDP ntpUDP;
 extern NTPClient ntpClient;
 extern Adafruit_MPU6050 mpu;
 extern PulseOximeter pox;
+extern SemaphoreHandle_t i2cMutex;
 
 #endif

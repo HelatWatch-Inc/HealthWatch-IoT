@@ -100,6 +100,15 @@ void centerText(String text, int y)
 void drawClock(bool fullRedraw)
 {
     ntpClient.update();
+    String currentTime = ntpClient.getFormattedTime();
+    static String lastTime = "";
+    
+    if (!fullRedraw && currentTime == lastTime)
+    {
+        return; // No ha cambiado la hora, no se requiere redibujar ni transmitir
+    }
+    lastTime = currentTime;
+
     if (fullRedraw)
     {
         display.clearDisplay();
@@ -131,12 +140,29 @@ void drawClock(bool fullRedraw)
     display.setTextSize(2);
     display.fillRect(16, 27, 98, 16, BLACK);
     display.setCursor(17, 27);
-    display.print(ntpClient.getFormattedTime());
-    display.display();
+    display.print(currentTime);
+
+    if (xSemaphoreTake(i2cMutex, portMAX_DELAY) == pdTRUE)
+    {
+        display.display();
+        xSemaphoreGive(i2cMutex);
+    }
 }
 
 void drawMenu(bool fullRedraw, int items[])
 {
+    static int lastItems[3] = {-1, -1, -1};
+    if (!fullRedraw && 
+        items[0] == lastItems[0] && 
+        items[1] == lastItems[1] && 
+        items[2] == lastItems[2])
+    {
+        return; // No ha cambiado el menú, no requiere redibujar ni transmitir
+    }
+    lastItems[0] = items[0];
+    lastItems[1] = items[1];
+    lastItems[2] = items[2];
+
     if (fullRedraw)
     {
         display.clearDisplay();
@@ -166,13 +192,25 @@ void drawMenu(bool fullRedraw, int items[])
     display.setCursor(27, 49);
     display.setTextColor(WHITE);
     display.print(menuItems[items[2]]);
-    display.display();
+
+    if (xSemaphoreTake(i2cMutex, portMAX_DELAY) == pdTRUE)
+    {
+        display.display();
+        xSemaphoreGive(i2cMutex);
+    }
 }
 
 // Items
 
 void drawChronometer(bool fullRedraw, unsigned long elapsedTime)
 {
+    static unsigned long lastDraw = 0;
+    if (!fullRedraw && (millis() - lastDraw < 100))
+    {
+        return; // Limitar tasa de refresco a 100ms
+    }
+    lastDraw = millis();
+
     if (fullRedraw)
     {
         display.clearDisplay();
@@ -199,7 +237,12 @@ void drawChronometer(bool fullRedraw, unsigned long elapsedTime)
     display.setTextSize(2);
     display.setCursor(17, 22);
     display.printf("%02d:%02d:%02d", minutes, seconds, milliseconds);
-    display.display();
+
+    if (xSemaphoreTake(i2cMutex, portMAX_DELAY) == pdTRUE)
+    {
+        display.display();
+        xSemaphoreGive(i2cMutex);
+    }
 }
 
 void drawFlashlight(bool fullRedraw)
@@ -207,6 +250,10 @@ void drawFlashlight(bool fullRedraw)
     if (fullRedraw)
     {
         display.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, WHITE);
+        if (xSemaphoreTake(i2cMutex, portMAX_DELAY) == pdTRUE)
+        {
+            display.display();
+            xSemaphoreGive(i2cMutex);
+        }
     }
-    display.display();
 }

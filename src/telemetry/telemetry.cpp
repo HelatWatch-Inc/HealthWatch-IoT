@@ -53,10 +53,24 @@ static int simularBateria()
     return (bat < 0) ? 0 : bat;
 }
 
+static void oximeterTask(void *parameter)
+{
+    while (true)
+    {
+        if (xSemaphoreTake(i2cMutex, portMAX_DELAY) == pdTRUE)
+        {
+            pox.update();
+            xSemaphoreGive(i2cMutex);
+        }
+        vTaskDelay(pdMS_TO_TICKS(5)); // Actualizar cada 5 ms
+    }
+}
+
 void initTelemetry()
 {
     // mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
     xTaskCreatePinnedToCore(loop0, "sensorTaskHandle", 5000, NULL, 1, &sensorTaskHandle, 0);
+    xTaskCreatePinnedToCore(oximeterTask, "oximeterTask", 3000, NULL, 2, NULL, 0);
 }
 
 static void loop0(void *parameter)
@@ -71,7 +85,11 @@ static void loop0(void *parameter)
         // mqttClient.loop();
 
         sensors_event_t a, g, temp;
-        mpu.getEvent(&a, &g, &temp);
+        if (xSemaphoreTake(i2cMutex, portMAX_DELAY) == pdTRUE)
+        {
+            mpu.getEvent(&a, &g, &temp);
+            xSemaphoreGive(i2cMutex);
+        }
 
         JsonDocument doc;
 
@@ -91,8 +109,16 @@ static void loop0(void *parameter)
         doc["temp"] = temp.temperature;
 
         // MAX30100
-        doc["heart_rate"] = pox.getHeartRate();
-        doc["spo2"] = pox.getSpO2();
+        float hr = 0.0;
+        float sp = 0.0;
+        if (xSemaphoreTake(i2cMutex, portMAX_DELAY) == pdTRUE)
+        {
+            hr = pox.getHeartRate();
+            sp = pox.getSpO2();
+            xSemaphoreGive(i2cMutex);
+        }
+        doc["heart_rate"] = hr;
+        doc["spo2"] = sp;
 
         // Telemetría
         doc["rssi"] = WiFi.RSSI();

@@ -5,9 +5,15 @@
 #include "state/state_manager.h"
 #include <Arduino.h>
 
+SemaphoreHandle_t i2cMutex = NULL;
+
 void setup()
 {
     Serial.begin(9600);
+    
+    // Inicializar el mutex I2C antes de inicializar cualquier periferico I2C
+    i2cMutex = xSemaphoreCreateMutex();
+    
     initWifi();
     Serial.println("-----------------------------");
     initNtpClient();
@@ -31,5 +37,4 @@ void loop()
 {
     updateInputs(onSelectPressed, onUpPressed, onDownPressed);
     updateState();
-    pox.update();
 }
