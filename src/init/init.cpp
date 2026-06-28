@@ -8,6 +8,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 WiFiUDP ntpUDP;
 NTPClient ntpClient(ntpUDP, "south-america.pool.ntp.org", -5 * 3600, 60000);
 Adafruit_MPU6050 mpu;
+PulseOximeter pox;
 
 // Menu e items
 char menuItems[NUM_MENU_ITEMS][MAX_MENU_ITEM_LENGTH] = {
@@ -57,7 +58,6 @@ void initBuzzer()
 
 void initMPU()
 {
-    Wire.begin(I2C_SDA, I2C_SCL);
     delay(100);
 
     if (!mpu.begin())
@@ -77,6 +77,16 @@ void initMPU()
     mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 }
 
+void initPulseOximeter()
+{
+    if (!pox.begin())
+    {
+        for (;;)
+            ;
+    }
+    Serial.println("MAX30100 conectado correctamente ...");
+}
+
 void initScreen()
 {
     if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
@@ -85,6 +95,6 @@ void initScreen()
         for (;;)
             ;
     }
-    Serial.println("Pantalla funcionando ...");
+    Serial.println("OLED SSD1306 conectado correctamente ...");
     display.clearDisplay();
 }

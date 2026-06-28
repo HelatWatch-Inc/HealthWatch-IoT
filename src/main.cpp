@@ -14,9 +14,13 @@ void setup()
     Serial.println("-----------------------------");
     initButtons();
     Serial.println("-----------------------------");
+
+    Wire.begin(I2C_SDA, I2C_SCL);
+    initMPU();
+    Serial.println("-----------------------------");
     initScreen();
     Serial.println("-----------------------------");
-    initMPU();
+    initPulseOximeter();
     Serial.println("-----------------------------");
 
     initTelemetry();
@@ -27,4 +31,5 @@ void loop()
 {
     updateInputs(onSelectPressed, onUpPressed, onDownPressed);
     updateState();
+    pox.update();
 }

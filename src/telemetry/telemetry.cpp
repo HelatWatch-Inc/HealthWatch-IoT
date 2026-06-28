@@ -90,9 +90,9 @@ static void loop0(void *parameter)
 
         doc["temp"] = temp.temperature;
 
-        /// Biométricos simulados
-        doc["heart_rate"] = simularHeartRate();
-        doc["spo2"] = simularSpO2();
+        // MAX30100
+        doc["heart_rate"] = pox.getHeartRate();
+        doc["spo2"] = pox.getSpO2();
 
         // Telemetría
         doc["rssi"] = WiFi.RSSI();

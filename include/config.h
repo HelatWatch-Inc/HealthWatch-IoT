@@ -21,6 +21,7 @@
 // Sensores
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
+#include "MAX30100_PulseOximeter.h"
 
 // MQTT
 #include <PubSubClient.h>
@@ -60,5 +61,6 @@ extern Adafruit_SSD1306 display;
 extern WiFiUDP ntpUDP;
 extern NTPClient ntpClient;
 extern Adafruit_MPU6050 mpu;
+extern PulseOximeter pox;
 
 #endif

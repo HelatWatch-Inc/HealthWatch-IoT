@@ -6,5 +6,6 @@ void initNtpClient();
 void initButtons();
 void initScreen();
 void initMPU();
+void initPulseOximeter();
 
 #endif
