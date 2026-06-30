@@ -1,6 +1,7 @@
 #include "telemetry.h"
 #include "config.h"
 #include "constants.h"
+#include "secrets.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>

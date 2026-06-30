@@ -1,5 +1,6 @@
 #include "config.h"
 #include "states.h"
+#include "secrets.h"
 #include "constants.h"
 #include "menu_icons.h"
 #include "init.h"
