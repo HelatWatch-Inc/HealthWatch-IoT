@@ -2,36 +2,32 @@
 #include "config.h"
 #include "constants.h"
 #include "secrets.h"
-#include <WiFi.h>
-#include <PubSubClient.h>
-#include <ArduinoJson.h>
 
 // Tareas del nucleo 0
 static TaskHandle_t sensorTaskHandle;
 static void loop0(void *parameter);
 
-// static WiFiClient espClient;
-// static PubSubClient mqttClient(espClient);
+static WiFiClientSecure espClient;
+static PubSubClient mqttClient(espClient);
 
 // setup MQTT
 static void reconnectMQTT()
 {
-    // while (!mqttClient.connected())
-    // {
-    //     Serial.print("Intentando conexión MQTT...");
-    //     // Intentar conectar usando el ID del ESP32 como identificador de cliente MQTT
-    //     if (mqttClient.connect(ID_DEVICE))
-    //     {
-    //         Serial.println("¡Conectado al Broker Mosquitto!");
-    //     }
-    //     else
-    //     {
-    //         Serial.print("Falló con estado: ");
-    //         Serial.print(mqttClient.state());
-    //         Serial.println(". Reintentando en 5 segundos...");
-    //         vTaskDelay(pdMS_TO_TICKS(5000));
-    //     }
-    // }
+    while (!mqttClient.connected())
+    {
+        Serial.print("Intentando conexión MQTT...");
+        if (mqttClient.connect(ID_DEVICE, MQTT_USER, MQTT_PASS))
+        {
+            Serial.println("¡Conectado al Broker Mosquitto!");
+        }
+        else
+        {
+            Serial.print("Falló con estado: ");
+            Serial.print(mqttClient.state());
+            Serial.println(". Reintentando en 5 segundos...");
+            vTaskDelay(pdMS_TO_TICKS(5000));
+        }
+    }
 }
 
 // =========================
@@ -69,21 +65,23 @@ static void oximeterTask(void *parameter)
 
 void initTelemetry()
 {
-    // mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+    mqttClient.setBufferSize(MAX_MQTT_PACKET_SIZE);
     xTaskCreatePinnedToCore(loop0, "sensorTaskHandle", 5000, NULL, 1, &sensorTaskHandle, 0);
     xTaskCreatePinnedToCore(oximeterTask, "oximeterTask", 3000, NULL, 2, NULL, 0);
 }
 
 static void loop0(void *parameter)
 {
+    espClient.setInsecure(); // TODO: Cambiar a certificado válido para producción
+    mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
     while (true)
     {
-        // if (!mqttClient.connected())
-        // {
-        //     reconnectMQTT();
-        // }
+        if (!mqttClient.connected())
+        {
+            reconnectMQTT();
+        }
 
-        // mqttClient.loop();
+        mqttClient.loop();
 
         sensors_event_t a, g, temp;
         if (xSemaphoreTake(i2cMutex, portMAX_DELAY) == pdTRUE)
@@ -126,19 +124,23 @@ static void loop0(void *parameter)
         doc["battery"] = simularBateria();
 
         // Serializar JSON a un string buffer
-        // char jsonBuffer[512];
-        // serializeJson(doc, jsonBuffer);
+        char jsonBuffer[MAX_MQTT_PACKET_SIZE];
+        serializeJson(doc, jsonBuffer);
 
         // Publicar carga útil en el broker MQTT
-        // if (mqttClient.publish(MQTT_TOPIC, jsonBuffer))
-        // {
-        //     Serial.print("Datos transmitidos exitosamente a tópico: ");
-        //     Serial.println(MQTT_TOPIC);
-        // }
-        // else
-        // {
-        //     Serial.println("Error crítico: No se pudo despachar el mensaje por MQTT.");
-        // }
+        if (mqttClient.publish(MQTT_TOPIC, jsonBuffer))
+        {
+            Serial.print("Datos transmitidos exitosamente a tópico: ");
+            Serial.println(MQTT_TOPIC);
+        }
+        else
+        {
+            Serial.println("Error crítico: No se pudo despachar el mensaje por MQTT.");
+            Serial.print("Estado del cliente MQTT: ");
+            Serial.println(mqttClient.state());
+            Serial.print("Tamanio del JSON generado:");
+            Serial.println(strlen(jsonBuffer));
+        }
 
         serializeJsonPretty(doc, Serial);
         Serial.println();

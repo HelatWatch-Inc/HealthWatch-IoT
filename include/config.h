@@ -15,6 +15,7 @@
 // Conexion a Wifi
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#include <WiFiClientSecure.h>
 
 //  Cliente NTP
 #include <NTPClient.h>
@@ -25,6 +26,7 @@
 #include "MAX30100_PulseOximeter.h"
 
 // MQTT
+#define MAX_MQTT_PACKET_SIZE 512
 #include <PubSubClient.h>
 
 // JSON
