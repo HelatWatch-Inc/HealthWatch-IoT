@@ -28,12 +28,18 @@ const char *monthsOfTheYear[12] = {"ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JU
 
 void initWifi()
 {
-    WiFi.begin(WIFI_SSID, WIFI_PASS, 6);
-    while (WiFi.status() != WL_CONNECTED)
+    WiFiManager wm;
+
+    bool res;
+    res = wm.autoConnect("HealthWatch-IoT");
+
+    if (!res)
     {
-        delay(1000);
-        Serial.println("Conectandose a la red Wi-Fi...");
+        Serial.println("Fallo al conectar a la red Wi-Fi");
+        wm.resetSettings();
+        ESP.restart();
     }
+
     Serial.println("Conexion exitosa");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());

@@ -14,6 +14,7 @@
 
 // Conexion a Wifi
 #include <WiFi.h>
+#include <WiFiManager.h>
 #include <WiFiUdp.h>
 #include <WiFiClientSecure.h>
 
