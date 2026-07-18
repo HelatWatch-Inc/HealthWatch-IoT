@@ -4,6 +4,8 @@
 #include "constants.h"
 #include "menu_icons.h"
 #include "init.h"
+#include "telemetry/telemetry.h"
+#include <Preferences.h>
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 WiFiUDP ntpUDP;
@@ -28,21 +30,61 @@ const char *monthsOfTheYear[12] = {"ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JU
 
 void initWifi()
 {
+    // Cargar configuraciones guardadas desde Preferences (NVS)
+    Preferences prefs;
+    prefs.begin("healthwatch", false);
+
+    // Leer valores guardados. Si no existen, conservar los predeterminados de telemetry.cpp
+    String saved_device = prefs.getString("id_device", id_device);
+    String saved_patient = prefs.getString("id_patient", id_patient);
+
+    strncpy(id_device, saved_device.c_str(), sizeof(id_device) - 1);
+    strncpy(id_patient, saved_patient.c_str(), sizeof(id_patient) - 1);
+
+    prefs.end();
+
     WiFiManager wm;
 
+    // Crear parámetros personalizados para WiFiManager
+    WiFiManagerParameter custom_id_device("device_id", "ID del Dispositivo", id_device, 40);
+    WiFiManagerParameter custom_id_patient("patient_id", "ID del Paciente", id_patient, 40);
+
+    wm.addParameter(&custom_id_device);
+    wm.addParameter(&custom_id_patient);
+
+    wm.resetSettings();
+
     bool res;
-    res = wm.autoConnect("HealthWatch-IoT");
+    res = wm.autoConnect("HealthWatch-IoT", "12345678");
 
     if (!res)
     {
         Serial.println("Fallo al conectar a la red Wi-Fi");
-        wm.resetSettings();
         ESP.restart();
     }
+
+    // Copiar los valores ingresados por el usuario desde el portal
+    strncpy(id_device, custom_id_device.getValue(), sizeof(id_device) - 1);
+    strncpy(id_patient, custom_id_patient.getValue(), sizeof(id_patient) - 1);
+
+    // Guardar los nuevos valores en Preferences
+    prefs.begin("healthwatch", false);
+    prefs.putString("id_device", id_device);
+    prefs.putString("id_patient", id_patient);
+    prefs.end();
+
+    // Formar dinámicamente el tópico MQTT
+    snprintf(mqtt_topic, sizeof(mqtt_topic), "healthwatch/%s/%s/biometrics", id_patient, id_device);
 
     Serial.println("Conexion exitosa");
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP());
+    Serial.print("ID Dispositivo: ");
+    Serial.println(id_device);
+    Serial.print("ID Paciente: ");
+    Serial.println(id_patient);
+    Serial.print("Tópico MQTT Dinámico: ");
+    Serial.println(mqtt_topic);
 }
 
 void initNtpClient()

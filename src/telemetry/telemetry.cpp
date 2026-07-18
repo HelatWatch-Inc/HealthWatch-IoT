@@ -3,6 +3,11 @@
 #include "constants.h"
 #include "secrets.h"
 
+// Variables globales para IDs dinamicos
+char id_device[40] = DEFAULT_ID_DEVICE;
+char id_patient[40] = DEFAULT_ID_PATIENT;
+char mqtt_topic[100] = "healthwatch/" DEFAULT_ID_PATIENT "/" DEFAULT_ID_DEVICE "/biometrics";
+
 // Tareas del nucleo 0
 static TaskHandle_t sensorTaskHandle;
 static void loop0(void *parameter);
@@ -16,7 +21,7 @@ static void reconnectMQTT()
     while (!mqttClient.connected())
     {
         Serial.print("Intentando conexión MQTT...");
-        if (mqttClient.connect(ID_DEVICE, MQTT_USER, MQTT_PASS))
+        if (mqttClient.connect(id_device, MQTT_USER, MQTT_PASS))
         {
             Serial.println("¡Conectado al Broker Mosquitto!");
         }
@@ -72,7 +77,8 @@ void initTelemetry()
 
 static void loop0(void *parameter)
 {
-    espClient.setInsecure(); // TODO: Cambiar a certificado válido para producción
+    espClient.setCACert(mqtt_ca_cert);
+
     mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
     while (true)
     {
@@ -93,8 +99,8 @@ static void loop0(void *parameter)
         JsonDocument doc;
 
         // TAGS
-        doc["id_patient"] = ID_PATIENT;
-        doc["id_device"] = ID_DEVICE;
+        doc["id_patient"] = id_patient;
+        doc["id_device"] = id_device;
 
         // MPU6050
         doc["ax"] = a.acceleration.x;
@@ -128,10 +134,10 @@ static void loop0(void *parameter)
         serializeJson(doc, jsonBuffer);
 
         // Publicar carga útil en el broker MQTT
-        if (mqttClient.publish(MQTT_TOPIC, jsonBuffer))
+        if (mqttClient.publish(mqtt_topic, jsonBuffer))
         {
             Serial.print("Datos transmitidos exitosamente a tópico: ");
-            Serial.println(MQTT_TOPIC);
+            Serial.println(mqtt_topic);
         }
         else
         {
