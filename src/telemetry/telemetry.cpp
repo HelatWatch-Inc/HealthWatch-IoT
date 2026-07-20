@@ -12,7 +12,7 @@ char mqtt_topic[100] = "healthwatch/" DEFAULT_ID_PATIENT "/" DEFAULT_ID_DEVICE "
 static TaskHandle_t sensorTaskHandle;
 static void loop0(void *parameter);
 
-static WiFiClientSecure espClient;
+static WiFiClient espClient;
 static PubSubClient mqttClient(espClient);
 
 // setup MQTT
@@ -21,7 +21,7 @@ static void reconnectMQTT()
     while (!mqttClient.connected())
     {
         Serial.print("Intentando conexión MQTT...");
-        if (mqttClient.connect(id_device, MQTT_USER, MQTT_PASS))
+        if (mqttClient.connect(id_device))
         {
             Serial.println("¡Conectado al Broker Mosquitto!");
         }
@@ -77,8 +77,7 @@ void initTelemetry()
 
 static void loop0(void *parameter)
 {
-    espClient.setCACert(mqtt_ca_cert);
-
+    // espClient.setCACert(mqtt_ca_cert);
     mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
     while (true)
     {

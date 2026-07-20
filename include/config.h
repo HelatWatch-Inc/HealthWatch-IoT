@@ -16,7 +16,7 @@
 #include <WiFi.h>
 #include <WiFiManager.h>
 #include <WiFiUdp.h>
-#include <WiFiClientSecure.h>
+// #include <WiFiClientSecure.h>
 
 //  Cliente NTP
 #include <NTPClient.h>
